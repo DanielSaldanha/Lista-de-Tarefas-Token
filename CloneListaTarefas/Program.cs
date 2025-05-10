@@ -43,6 +43,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
 new MySqlServerVersion(new Version(8, 0, 21))));
 //FIM DAS ALTERAÇOES
+
+// Configura o MemoryCache
+builder.Services.AddMemoryCache();
+
+// Adiciona suporte para controladores
+builder.Services.AddControllers();
+
 //JTW
 var key = Encoding.ASCII.GetBytes("m1nh@_Ultr@_ch@v3_s3cr3t@_&_F0rt3"); // Mesma chave usada no TokenService
 builder.Services.AddAuthentication(options =>
