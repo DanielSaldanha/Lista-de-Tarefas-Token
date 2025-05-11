@@ -14,7 +14,7 @@ namespace lista_de_tarefas.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IMemoryCache _cache;
-        public TasksController(IMemoryCache cache,AppDbContext context)
+        public TasksController(IMemoryCache cache, AppDbContext context)
         {
             _context = context;
             _cache = cache;
@@ -36,22 +36,47 @@ namespace lista_de_tarefas.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Tarefa>>> Get()
+        public async Task<ActionResult<IEnumerable<Tarefa>>> Get([FromQuery] int? id = null)
         {
-            string key = "cacheTarefa";
-            if(!_cache.TryGetValue(key, out List<Tarefa> Vget))
+           
+            if (id.HasValue)
             {
-                Vget = await _context.lista.ToListAsync();
-                var cacheoptions = new MemoryCacheEntryOptions
+                
+                if (id <= 0)
                 {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
-                    SlidingExpiration = TimeSpan.FromMinutes(10)
-                };
-                _cache.Set(key, Vget, cacheoptions);
+                    return BadRequest("O ID deve ser maior que zero.");
+                }
+                string IdKey = $"cacheTarefa_{id.Value}";
+                if (!_cache.TryGetValue(IdKey, out Tarefa Vgetid))
+                {
+                    Vgetid = await _context.lista.FindAsync(id);
+                    if(Vgetid == null)
+                    {
+                        return NotFound("nao encontrado");
+                    }
+                    var cacheoptions = new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
+                        SlidingExpiration = TimeSpan.FromMinutes(10)
+                    };
+                    _cache.Set(IdKey, Vgetid, cacheoptions);
+                }
+                return Ok(Vgetid);
             }
-            return Ok(Vget);
 
-
+            
+                string key = "cacheTarefa";
+                if (!_cache.TryGetValue(key, out List<Tarefa> Vget))
+                {
+                    Vget = await _context.lista.ToListAsync();
+                    var cacheoptions = new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
+                        SlidingExpiration = TimeSpan.FromMinutes(10)
+                    };
+                    _cache.Set(key, Vget, cacheoptions);
+                }
+                return Ok(Vget);         
         }
 
         [HttpPut("{id}")]
